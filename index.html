@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QORVEX_Label</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- Encabezado (sólo con sesión iniciada) -->
+  <header class="topbar" id="topbar" hidden>
+    <div class="brand-area">
+      <img class="logo logo-dark" src="assets/qorvex-logo-dark.png" alt="QORVEX">
+      <img class="logo logo-light" src="assets/qorvex-logo-light.png" alt="QORVEX">
+      <div class="brand-sub">
+        <div class="brand-title">Etiquetas</div>
+        <div class="brand-desc">Generación y control de etiquetas</div>
+      </div>
+    </div>
+    <div class="userbox">
+      <span class="pill" id="whoami"></span>
+      <button class="btn ghost" id="btn-printer" title="Cambiar impresora">Impresora</button>
+      <button class="btn ghost" id="btn-theme" title="Cambiar tema">Tema</button>
+      <button class="btn ghost" id="btn-logout">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <!-- Pantalla: abrir o crear el libro -->
+  <section class="view" id="view-open">
+    <div class="card center">
+      <img class="logo logo-dark" src="assets/qorvex-logo-dark.png" alt="QORVEX">
+      <img class="logo logo-light" src="assets/qorvex-logo-light.png" alt="QORVEX">
+      <h1>QORVEX_Label</h1>
+      <p class="muted">Selecciona la carpeta donde está QORVEX_Label.xlsx. Si no existe, la app puede crearlo ahí.</p>
+      <button class="btn primary" id="btn-open">Seleccionar carpeta</button>
+      <button class="btn" id="btn-last" hidden>Abrir última carpeta</button>
+      <p class="error" id="open-error"></p>
+      <button class="btn ghost-dark" id="btn-theme-open">Cambiar tema</button>
+    </div>
+  </section>
+
+  <!-- Pantalla: login -->
+  <section class="view" id="view-login" hidden>
+    <form class="card center" id="form-login" autocomplete="off">
+      <h2>Iniciar sesión</h2>
+      <label>Usuario
+        <input id="login-user" required maxlength="30">
+      </label>
+      <label>Contraseña
+        <input id="login-pass" type="password" required maxlength="60">
+      </label>
+      <button class="btn primary" type="submit">Entrar</button>
+      <p class="error" id="login-error"></p>
+    </form>
+  </section>
+
+  <!-- Pantalla: impresora -->
+  <section class="view" id="view-printer" hidden>
+    <form class="card center" id="form-printer">
+      <h2>Impresora</h2>
+      <p class="muted">Escribe el nombre exacto de la impresora Printronix tal como aparece en Windows. Se guardará en tu usuario; puedes cambiarla después.</p>
+      <label>Nombre de la impresora
+        <input id="printer-name" required maxlength="120">
+      </label>
+      <button class="btn primary" type="submit">Guardar</button>
+      <button class="btn" type="button" id="printer-cancel">Cancelar</button>
+    </form>
+  </section>
+
+  <!-- Área principal: barra lateral + contenido -->
+  <main class="shell" id="view-main" hidden>
+    <aside class="sidebar">
+      <button class="nav-item active" data-tab="home"><span class="ico">&#9638;</span>Inicio</button>
+      <button class="nav-item" data-tab="generate"><span class="ico">&#127991;</span>Etiquetas</button>
+      <button class="nav-item" data-tab="history"><span class="ico">&#8635;</span>Historial</button>
+      <button class="nav-item" data-tab="config"><span class="ico">&#9881;</span>Configuración</button>
+      <button class="nav-item" data-tab="about"><span class="ico">i</span>Acerca de</button>
+    </aside>
+
+    <div class="content">
+      <!-- Inicio -->
+      <section class="tabpanel" id="tab-home">
+        <div class="card">
+          <h2>Último ID generado por componente</h2>
+          <div class="table-wrap">
+            <table id="home-table">
+              <thead><tr><th>Operación</th><th>Componente</th><th>Línea</th><th>Prefijo</th><th>Último ID</th><th>Próximo ID</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Generar -->
+      <section class="tabpanel" id="tab-generate" hidden>
+        <div class="card">
+          <h2>Parámetros de etiquetas</h2>
+          <p class="muted">Configura los datos para generar las etiquetas.</p>
+          <div class="form-grid">
+            <label>Operación
+              <select id="gen-op"></select>
+            </label>
+            <label>Componente
+              <select id="gen-comp"></select>
+            </label>
+            <label>Línea
+              <select id="gen-line"></select>
+            </label>
+            <label>Cantidad de etiquetas
+              <input id="gen-qty" type="number" min="1" max="500" value="1">
+            </label>
+            <div class="range-box" id="gen-range">Ingresa una cantidad para ver el rango.</div>
+            <div class="actions">
+              <button class="btn" id="btn-preview-range">Ver rango</button>
+              <button class="btn primary" id="btn-generate">Generar y reservar</button>
+            </div>
+            <p class="error" id="gen-error"></p>
+          </div>
+        </div>
+
+        <div class="card" id="preview-card" hidden>
+          <div class="preview-head">
+            <h2>Vista previa</h2>
+            <div class="actions">
+              <button class="btn" id="btn-cancel-batch">Cancelar lote</button>
+              <button class="btn primary" id="btn-print">Imprimir</button>
+            </div>
+          </div>
+          <div class="preview" id="preview"></div>
+        </div>
+      </section>
+
+      <!-- Historial -->
+      <section class="tabpanel" id="tab-history" hidden>
+        <div class="card">
+          <div class="preview-head">
+            <h2>Historial de impresión</h2>
+            <input id="hist-filter" placeholder="Buscar por ID, componente o usuario">
+          </div>
+          <div class="table-wrap">
+            <table id="hist-table">
+              <thead>
+                <tr><th>Fecha</th><th>Hora</th><th>Usuario</th><th>Operación</th><th>Componente</th><th>Línea</th><th>ID</th><th>Posición</th><th>Estado</th><th></th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Configuración -->
+      <section class="tabpanel" id="tab-config" hidden>
+        <div class="card" id="config-locked">
+          <h2>Configuración protegida</h2>
+          <p class="muted">Ingresa la contraseña de administrador para modificar la configuración.</p>
+          <form id="form-admin" class="inline-form">
+            <input id="admin-pass" type="password" placeholder="Contraseña de administrador" required>
+            <button class="btn primary" type="submit">Desbloquear</button>
+          </form>
+          <p class="error" id="admin-error"></p>
+        </div>
+
+        <div id="config-unlocked" hidden>
+          <div class="card">
+            <h2>Componentes</h2>
+            <div class="table-wrap">
+              <table id="cfg-comp-table">
+                <thead><tr><th>Nombre</th><th>Prefijo</th><th>Activo</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <form class="inline-form" id="form-comp">
+              <input id="cfg-comp-name" placeholder="Nombre" maxlength="40" required>
+              <input id="cfg-comp-prefix" placeholder="Prefijo (ej. XX)" maxlength="4" required>
+              <button class="btn" type="submit">Agregar componente</button>
+            </form>
+          </div>
+
+          <div class="card">
+            <h2>Líneas</h2>
+            <div class="table-wrap">
+              <table id="cfg-line-table">
+                <thead><tr><th>Línea</th><th>Activa</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <form class="inline-form" id="form-line">
+              <input id="cfg-line-id" placeholder="Identificador de línea" maxlength="10" required>
+              <button class="btn" type="submit">Agregar línea</button>
+            </form>
+          </div>
+
+          <div class="card">
+            <h2>Usuarios</h2>
+            <div class="table-wrap">
+              <table id="cfg-user-table">
+                <thead><tr><th>Usuario</th><th>Nombre</th><th>Contraseña</th><th>Impresora</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <form class="inline-form" id="form-user">
+              <input id="cfg-user-id" placeholder="Usuario" maxlength="30" required>
+              <input id="cfg-user-name" placeholder="Nombre" maxlength="60" required>
+              <input id="cfg-user-pass" placeholder="Contraseña" maxlength="60" required>
+              <button class="btn" type="submit">Agregar usuario</button>
+            </form>
+          </div>
+
+          <div class="card">
+            <h2>Parámetros generales</h2>
+            <form class="inline-form" id="form-params">
+              <label>Minutos de inactividad
+                <input id="cfg-timeout" type="number" min="1" max="60" required>
+              </label>
+              <button class="btn" type="submit">Guardar</button>
+            </form>
+            <h3>Cambiar contraseña de administrador</h3>
+            <form class="inline-form" id="form-admin-pass">
+              <input id="cfg-admin-new" type="password" placeholder="Nueva contraseña" maxlength="60" required>
+              <button class="btn" type="submit">Cambiar</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- Acerca de -->
+      <section class="tabpanel" id="tab-about" hidden>
+        <div class="card">
+          <h2>QORVEX_Label</h2>
+          <p class="muted">Generación, control e impresión de etiquetas 4 × 6 pulgadas con trazabilidad en Excel.</p>
+          <p>Versión 1.0 · Una estación · Impresora Printronix · Excel como fuente de trazabilidad.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer" id="footer">
+    <div class="foot-brand">
+      <img src="assets/ch-logo.png" alt="CH Industrial Solutions">
+      <div>
+        <div>© Todos los derechos reservados</div>
+        <div>CH Industrial Solutions</div>
+      </div>
+    </div>
+    <div>Desarrollo: Ing. Carlos Hernández · Contacto: 8115377033</div>
+  </footer>
+</div>
+
+<!-- Área que sólo se ve al imprimir -->
+<div class="print-area" id="print-area"></div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<script src="js/ids.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
